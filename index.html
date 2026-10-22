@@ -21,9 +21,9 @@ main{padding:22px 28px;max-width:1500px;margin:auto}
 .kpi-label{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.06em}.kpi{font-size:29px;font-weight:750;margin-top:7px}.delta{font-size:12px;color:var(--accent2);margin-top:5px}
 .layout{display:grid;grid-template-columns:1.45fr 1fr;gap:18px;margin-bottom:18px}
 .layout-single{display:grid;grid-template-columns:1fr;gap:18px;margin-bottom:18px}
-.card h2{font-size:16px;margin:0 0 14px}.chartbox{height:330px;position:relative}
+.card h2{font-size:16px;margin:0 0 14px}.chartbox{height:460px;position:relative}
 svg{width:100%;height:100%;overflow:visible}.axis{stroke:#dbe1ea;stroke-width:1}.bar{fill:#2563eb;opacity:.88}.bar:hover{opacity:1}.label{font-size:11px;fill:#4b5563}.value{font-size:11px;fill:#111827;font-weight:600}
-.legend{font-size:12px;color:var(--muted);margin-top:8px;display:flex;gap:15px;align-items:center}
+.legend{font-size:12px;color:var(--muted);margin-top:8px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
 .legend-item{display:flex;align-items:center;gap:6px}
 .legend-color{width:12px;height:12px;border-radius:3px;display:inline-block}
 .table-wrap{overflow:auto;max-height:500px}table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:10px 9px;border-bottom:1px solid var(--line);text-align:left}th{position:sticky;top:0;background:#f8fafc;z-index:1}td.num,th.num{text-align:right}
@@ -42,6 +42,7 @@ svg{width:100%;height:100%;overflow:visible}.axis{stroke:#dbe1ea;stroke-width:1}
   <div class="nav-tabs">
     <button class="tab-btn active" onclick="switchTab('callcenter')">Call Center</button>
     <button class="tab-btn" onclick="switchTab('email')">Email Support</button>
+    <button class="tab-btn" onclick="switchTab('mail')">Mail</button>
   </div>
   <div class="controls">
     <select id="monthFilter"></select>
@@ -160,6 +161,78 @@ svg{width:100%;height:100%;overflow:visible}.axis{stroke:#dbe1ea;stroke-width:1}
       </div>
     </section>
   </div>
+
+  <!-- MAIL TAB -->
+  <div id="tab-mail" class="tab-content">
+    <section class="grid">
+      <div class="card"><div class="kpi-label">Total Mail Volume</div><div id="mailTotal" class="kpi">0</div><div id="mailPeriod" class="delta">All months</div></div>
+      <div class="card"><div class="kpi-label">Avg Monthly Mail</div><div id="mailAvg" class="kpi">0</div><div class="delta">Monthly volume average</div></div>
+      <div class="card"><div class="kpi-label">Top Mail Type</div><div id="mailTopType" class="kpi" style="font-size:20px">—</div><div id="mailTopVal" class="delta">0 items</div></div>
+      <div class="card"><div class="kpi-label">Peak Volume Month</div><div id="mailPeak" class="kpi" style="font-size:22px">—</div><div id="mailPeakVal" class="delta">0 items</div></div>
+    </section>
+
+    <section class="layout">
+      <div class="card">
+        <h2>Mail Distribution by Type</h2>
+        <div class="chartbox"><svg id="mailPieChart" viewBox="0 0 1000 460" preserveAspectRatio="xMidYMid meet"></svg></div>
+      </div>
+      <div class="card">
+        <h2>Mail Volume Trend by Month</h2>
+        <div class="chartbox"><svg id="mailLineChart" viewBox="0 0 650 310" preserveAspectRatio="none"></svg></div>
+        <div class="legend">Total physical mail items received per month.</div>
+      </div>
+    </section>
+
+    <section class="layout">
+      <div class="card">
+        <h2>Program Share of Mails Received (&gt; 1%)</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Program</th>
+                <th class="num">Mail Share (%)</th>
+              </tr>
+            </thead>
+            <tbody id="mailProgramTable"></tbody>
+          </table>
+        </div>
+        <div class="legend">Filtered dynamically: shows only programs exceeding 1% for the selected month(s).</div>
+      </div>
+      <div class="card">
+        <h2>Mail Breakdown by Type</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Mail Type</th>
+                <th class="num">Total Items</th>
+                <th class="num">Percentage</th>
+              </tr>
+            </thead>
+            <tbody id="mailTypeTable"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="layout-single">
+      <div class="card">
+        <h2>Monthly Mail Totals</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Month</th>
+                <th class="num">Total Received</th>
+              </tr>
+            </thead>
+            <tbody id="mailMonthlyTable"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </div>
 </main>
 
 <script>
@@ -175,6 +248,45 @@ const EMAIL_DATA = [
   {"month": "July", "emails": 1191, "sla": 87.00},
   {"month": "August", "emails": 1531, "sla": 95.00},
   {"month": "September", "emails": 1144, "sla": 95.00}
+];
+
+const PROGRAM_MAIL_PCT_DATA = [
+  {"program": "Internal", "January": 43.13, "February": 42.46, "March": 32.31, "April": 43.57, "May": 23.73, "June": 22.32, "July": 12.87, "August": 11.11, "September": 13.72},
+  {"program": "Accelerant", "January": 22.88, "February": 13.97, "March": 22.48, "April": 20.38, "May": 19.49, "June": 27.83, "July": 25.74, "August": 26.75, "September": 38.50},
+  {"program": "MSI", "January": 15.03, "February": 21.36, "March": 16.15, "April": 20.38, "May": 21.19, "June": 26.30, "July": 18.81, "August": 27.98, "September": 25.66},
+  {"program": "Coterie", "January": 3.27, "February": 3.83, "March": 4.68, "April": 9.72, "May": 9.23, "June": 5.81, "July": 16.34, "August": 8.23, "September": 6.19},
+  {"program": "Boost", "January": 7.19, "February": 5.75, "March": 9.13, "April": 8.78, "May": 4.20, "June": 6.73, "July": 2.48, "August": 4.53, "September": 6.64},
+  {"program": "HDVI", "January": 0.98, "February": 3.83, "March": 4.68, "April": 5.02, "May": 8.47, "June": 5.20, "July": 8.42, "August": 3.70, "September": 5.31},
+  {"program": "Hippo", "January": 0.00, "February": 2.19, "March": 2.10, "April": 4.70, "May": 2.54, "June": 0.61, "July": 1.98, "August": 1.65, "September": 1.33},
+  {"program": "Simply Business", "January": 0.33, "February": 2.19, "March": 0.93, "April": 2.19, "May": 1.69, "June": 1.53, "July": 4.46, "August": 1.65, "September": 2.21},
+  {"program": "AmRisc", "January": 3.59, "February": 2.19, "March": 2.81, "April": 1.57, "May": 2.54, "June": 1.53, "July": 1.49, "August": 0.41, "September": 0.00},
+  {"program": "Ahoy", "January": 0.00, "February": 0.27, "March": 0.23, "April": 0.31, "May": 0.00, "June": 0.61, "July": 0.00, "August": 0.41, "September": 0.00},
+  {"program": "Annex Flood", "January": 0.00, "February": 0.82, "March": 0.23, "April": 0.31, "May": 0.00, "June": 0.00, "July": 0.00, "August": 0.00, "September": 0.00},
+  {"program": "Cabrillo", "January": 0.98, "February": 0.00, "March": 0.00, "April": 0.00, "May": 0.00, "June": 0.00, "July": 0.00, "August": 0.00, "September": 0.00},
+  {"program": "Mile Auto", "January": 0.65, "February": 0.27, "March": 0.00, "April": 0.00, "May": 0.00, "June": 0.31, "July": 0.50, "August": 0.41, "September": 0.00},
+  {"program": "Acadian", "January": 0.00, "February": 0.00, "March": 0.00, "April": 0.00, "May": 0.00, "June": 0.00, "July": 0.00, "August": 0.00, "September": 0.00},
+  {"program": "Arrowhead", "January": 0.00, "February": 0.00, "March": 0.00, "April": 0.00, "May": 0.00, "June": 0.00, "July": 0.00, "August": 0.00, "September": 0.00},
+  {"program": "Atlas", "January": 0.00, "February": 0.00, "March": 0.00, "April": 0.00, "May": 0.00, "June": 0.00, "July": 0.00, "August": 0.00, "September": 0.44},
+  {"program": "Team Focus", "January": 0.00, "February": 0.00, "March": 0.00, "April": 0.00, "May": 0.00, "June": 0.00, "July": 0.00, "August": 0.00, "September": 0.00},
+  {"program": "Boost LPL", "January": 0.00, "February": 0.00, "March": 1.40, "April": 0.00, "May": 0.00, "June": 0.00, "July": 0.00, "August": 0.00, "September": 0.00},
+  {"program": "Battleface", "January": 0.00, "February": 0.00, "March": 0.00, "April": 0.00, "May": 0.00, "June": 0.00, "July": 0.00, "August": 0.41, "September": 0.00},
+  {"program": "5-Star", "January": 0.00, "February": 0.00, "March": 0.00, "April": 0.00, "May": 0.00, "June": 0.00, "July": 0.00, "August": 0.00, "September": 0.00},
+  {"program": "Roamly/Outdoorsy", "January": 0.00, "February": 0.27, "March": 0.00, "April": 0.00, "May": 0.00, "June": 0.00, "July": 0.00, "August": 0.00, "September": 0.00},
+  {"program": "Pattern", "January": 0.00, "February": 0.00, "March": 0.00, "April": 0.00, "May": 0.00, "June": 0.00, "July": 0.00, "August": 0.00, "September": 0.00},
+  {"program": "Sola", "January": 0.00, "February": 0.00, "March": 0.00, "April": 0.00, "May": 0.00, "June": 0.00, "July": 0.00, "August": 0.00, "September": 0.00},
+  {"program": "Euclid Cyber", "January": 0.00, "February": 0.00, "March": 0.00, "April": 0.00, "May": 0.00, "June": 0.00, "July": 0.00, "August": 0.00, "September": 0.00}
+];
+
+const MAIL_DATA = [
+  {"month":"January","Finance":110,"Notice Of Financed Premium":71,"Notice Of Cancellation":20,"Mortgage Clause":13,"Check":13,"Claim":12,"Legal":9,"Advice Of Financed Premium":6,"Confirmation Of Financed Policy":5,"Privacy Choice":3,"Notice Of Rescission":2,"Evidence Of Insurance":1,"Compliance":1},
+  {"month":"February","Finance":148,"Notice Of Financed Premium":62,"Notice Of Cancellation":18,"Mortgage Clause":45,"Check":21,"Claim":32,"Legal":13,"Advice Of Financed Premium":3,"Confirmation Of Financed Policy":4,"Privacy Choice":3,"Notice Of Rescission":0,"Evidence Of Insurance":2,"Compliance":10},
+  {"month":"March","Finance":134,"Notice Of Financed Premium":150,"Notice Of Cancellation":24,"Mortgage Clause":11,"Check":13,"Claim":38,"Legal":3,"Advice Of Financed Premium":2,"Confirmation Of Financed Policy":4,"Privacy Choice":4,"Notice Of Rescission":16,"Evidence Of Insurance":4,"Compliance":4},
+  {"month":"April","Finance":76,"Notice Of Financed Premium":82,"Notice Of Cancellation":21,"Mortgage Clause":24,"Check":10,"Claim":58,"Legal":0,"Advice Of Financed Premium":0,"Confirmation Of Financed Policy":0,"Privacy Choice":4,"Notice Of Rescission":0,"Evidence Of Insurance":1,"Compliance":5},
+  {"month":"May","Finance":28,"Notice Of Financed Premium":37,"Notice Of Cancellation":6,"Mortgage Clause":3,"Check":1,"Claim":20,"Legal":11,"Advice Of Financed Premium":0,"Confirmation Of Financed Policy":0,"Privacy Choice":0,"Notice Of Rescission":0,"Evidence Of Insurance":0,"Compliance":0},
+  {"month":"June","Finance":61,"Notice Of Financed Premium":144,"Notice Of Cancellation":21,"Mortgage Clause":3,"Check":10,"Claim":50,"Legal":7,"Advice Of Financed Premium":0,"Confirmation Of Financed Policy":0,"Privacy Choice":1,"Notice Of Rescission":0,"Evidence Of Insurance":0,"Compliance":12},
+  {"month":"July","Finance":22,"Notice Of Financed Premium":73,"Notice Of Cancellation":14,"Mortgage Clause":4,"Check":7,"Claim":65,"Legal":7,"Advice Of Financed Premium":0,"Confirmation Of Financed Policy":0,"Privacy Choice":0,"Notice Of Rescission":0,"Evidence Of Insurance":6,"Compliance":4},
+  {"month":"August","Finance":24,"Notice Of Financed Premium":98,"Notice Of Cancellation":21,"Mortgage Clause":0,"Check":7,"Claim":39,"Legal":0,"Advice Of Financed Premium":0,"Confirmation Of Financed Policy":0,"Privacy Choice":5,"Notice Of Rescission":9,"Evidence Of Insurance":1,"Compliance":3},
+  {"month":"September","Finance":19,"Notice Of Financed Premium":110,"Notice Of Cancellation":27,"Mortgage Clause":5,"Check":6,"Claim":34,"Legal":6,"Advice Of Financed Premium":0,"Confirmation Of Financed Policy":0,"Privacy Choice":8,"Notice Of Rescission":0,"Evidence Of Insurance":0,"Compliance":6}
 ];
 
 const SLA_ABANDON_DATA = [
@@ -206,11 +318,16 @@ function switchTab(tab) {
     document.getElementById('tab-callcenter').classList.add('active');
     document.getElementById('programFilter').style.display = 'inline-block';
     document.getElementById('headerSub').textContent = 'Program volume, SLA, call disposition, and abandonment overview';
-  } else {
+  } else if(tab === 'email') {
     document.querySelectorAll('.tab-btn')[1].classList.add('active');
     document.getElementById('tab-email').classList.add('active');
     document.getElementById('programFilter').style.display = 'none';
     document.getElementById('headerSub').textContent = 'Email support performance and SLA compliance overview';
+  } else if(tab === 'mail') {
+    document.querySelectorAll('.tab-btn')[2].classList.add('active');
+    document.getElementById('tab-mail').classList.add('active');
+    document.getElementById('programFilter').style.display = 'none';
+    document.getElementById('headerSub').textContent = 'Physical mail processing volume and mail type distribution overview';
   }
   render();
 }
@@ -225,6 +342,11 @@ function filteredEmail(){
   return EMAIL_DATA.filter(r=>(m==="All"||r.month===m));
 }
 
+function filteredMail(){
+  const m=document.getElementById("monthFilter").value;
+  return MAIL_DATA.filter(r=>(m==="All"||r.month===m));
+}
+
 function filteredSla(){
   const m=document.getElementById("monthFilter").value;
   return SLA_ABANDON_DATA.filter(r=>(m==="All"||r.month===m));
@@ -237,8 +359,10 @@ function aggregate(rows,key,val){
 function render(){
   if(activeTab === 'callcenter') {
     renderCallCenter();
-  } else {
+  } else if(activeTab === 'email') {
     renderEmail();
+  } else if(activeTab === 'mail') {
+    renderMail();
   }
 }
 
@@ -262,7 +386,6 @@ function renderCallCenter(){
   document.getElementById("dispTotal").textContent=fmt(dispTotal);
   document.getElementById("period").textContent=selectedMonth==="All"?"All months":selectedMonth;
 
-  // Filtered rows for the SLA Table based on month slicer
   const slaRows = filteredSla();
   const avgSla = slaRows.length ? (slaRows.reduce((s,r) => s + r.sla, 0) / slaRows.length).toFixed(2) : 0;
   const avgAbandon = slaRows.length ? (slaRows.reduce((s,r) => s + r.abandon, 0) / slaRows.length).toFixed(2) : 0;
@@ -276,7 +399,6 @@ function renderCallCenter(){
   document.getElementById("maxAbandonMonth").textContent = maxAbandon.month;
   document.getElementById("maxAbandonVal").textContent = maxAbandon.abandon.toFixed(2) + "%";
 
-  // ALWAYS pass full SLA_ABANDON_DATA to drawClusteredColumns so the chart ignores all filters
   drawClusteredColumns(SLA_ABANDON_DATA);
   drawBars(sorted);
   drawLine();
@@ -320,6 +442,227 @@ function renderEmail(){
       <td class="num"><span class="badge" style="${r.sla >= 90 ? 'background:#dcfce7;color:#15803d;' : 'background:#fee2e2;color:#b91c1c;'}">${r.sla.toFixed(2)}%</span></td>
     </tr>
   `).join("") || `<tr><td colspan="3" class="empty">No email data</td></tr>`;
+}
+
+function renderMail(){
+  const rows = filteredMail();
+  const selectedMonth = document.getElementById("monthFilter").value;
+  
+  const mailKeys = ["Finance", "Notice Of Financed Premium", "Notice Of Cancellation", "Mortgage Clause", "Check", "Claim", "Legal", "Advice Of Financed Premium", "Confirmation Of Financed Policy", "Privacy Choice", "Notice Of Rescission", "Evidence Of Insurance", "Compliance"];
+  
+  const typeTotals = {};
+  mailKeys.forEach(k => typeTotals[k] = 0);
+  
+  let totalMail = 0;
+  const monthlyTotals = rows.map(r => {
+    let mTotal = 0;
+    mailKeys.forEach(k => {
+      let val = r[k] || 0;
+      typeTotals[k] += val;
+      mTotal += val;
+    });
+    totalMail += mTotal;
+    return { month: r.month, total: mTotal };
+  });
+
+  const avgMail = rows.length ? Math.round(totalMail / rows.length) : 0;
+  
+  const sortedTypes = Object.entries(typeTotals).sort((a,b) => b[1] - a[1]);
+  const topType = sortedTypes[0] || ["—", 0];
+  
+  let peak = monthlyTotals.reduce((max, r) => r.total > max.total ? r : max, {month: "—", total: 0});
+
+  document.getElementById("mailTotal").textContent = fmt(totalMail);
+  document.getElementById("mailAvg").textContent = fmt(avgMail);
+  document.getElementById("mailTopType").textContent = topType[0];
+  document.getElementById("mailTopVal").textContent = fmt(topType[1]) + " items";
+  document.getElementById("mailPeak").textContent = peak.month;
+  document.getElementById("mailPeakVal").textContent = fmt(peak.total) + " items";
+  document.getElementById("mailPeriod").textContent = selectedMonth === "All" ? "All months" : selectedMonth;
+
+  drawMailPieChart(sortedTypes, totalMail);
+  drawMailLineChart(monthlyTotals);
+
+  // Render Program Mail Percentage Table (> 1% filter)
+  const availableMonths = selectedMonth === "All" 
+    ? ["January", "February", "March", "April", "May", "June", "July", "August", "September"]
+    : [selectedMonth];
+
+  const programPcts = PROGRAM_MAIL_PCT_DATA.map(pObj => {
+    let sumPct = 0;
+    availableMonths.forEach(m => {
+      sumPct += (pObj[m] || 0);
+    });
+    const avgPct = sumPct / availableMonths.length;
+    return { program: pObj.program, pct: avgPct };
+  }).filter(item => item.pct > 1.0)
+    .sort((a,b) => b.pct - a.pct);
+
+  document.getElementById("mailProgramTable").innerHTML = programPcts.map(r => `
+    <tr>
+      <td>${htmlEscape(r.program)}</td>
+      <td class="num"><span class="badge">${r.pct.toFixed(2)}%</span></td>
+    </tr>
+  `).join("") || `<tr><td colspan="2" class="empty">No programs exceeding 1% for this selection</td></tr>`;
+
+  document.getElementById("mailTypeTable").innerHTML = sortedTypes.map(x => {
+    const pct = totalMail ? ((x[1] / totalMail) * 100).toFixed(2) : "0.00";
+    return `<tr><td>${htmlEscape(x[0])}</td><td class="num">${fmt(x[1])}</td><td class="num"><span class="badge">${pct}%</span></td></tr>`;
+  }).join("") || `<tr><td colspan="3" class="empty">No mail data</td></tr>`;
+
+  document.getElementById("mailMonthlyTable").innerHTML = monthlyTotals.map(r => `
+    <tr>
+      <td>${htmlEscape(r.month)}</td>
+      <td class="num">${fmt(r.total)}</td>
+    </tr>
+  `).join("") || `<tr><td colspan="2" class="empty">No monthly mail data</td></tr>`;
+}
+
+function drawMailPieChart(sortedTypes, totalMail){
+  const svg = document.getElementById("mailPieChart");
+  svg.innerHTML = "";
+
+  if(!totalMail) {
+    svg.insertAdjacentHTML("beforeend", `<text x="500" y="230" text-anchor="middle" fill="#6b7280">No data available</text>`);
+    return;
+  }
+
+  const colors = [
+    "#0f766e", "#2563eb", "#ea580c", "#dc2626", "#7c3aed", 
+    "#059669", "#db2777", "#4f46e5", "#ca8a04", "#0284c7", 
+    "#9333ea", "#16a34a", "#64748b"
+  ];
+
+  const cx = 500, cy = 230, r = 125, innerR = 60;
+  let startAngle = -Math.PI / 2;
+
+  const externalLabelsLeft = [];
+  const externalLabelsRight = [];
+
+  sortedTypes.forEach((item, i) => {
+    const [label, count] = item;
+    if(count === 0) return;
+    
+    const pct = count / totalMail;
+    const angle = pct * 2 * Math.PI;
+    const endAngle = startAngle + angle;
+
+    const x1 = cx + r * Math.cos(startAngle);
+    const y1 = cy + r * Math.sin(startAngle);
+    const x2 = cx + r * Math.cos(endAngle);
+    const y2 = cy + r * Math.sin(endAngle);
+
+    const ix1 = cx + innerR * Math.cos(startAngle);
+    const iy1 = cy + innerR * Math.sin(startAngle);
+    const ix2 = cx + innerR * Math.cos(endAngle);
+    const iy2 = cy + innerR * Math.sin(endAngle);
+
+    const largeArc = angle > Math.PI ? 1 : 0;
+    const pathData = `M ${ix1} ${iy1} L ${x1} ${y1} A ${r} ${r} 0 ${largeArc} 1 ${x2} ${y2} L ${ix2} ${iy2} A ${innerR} ${innerR} 0 ${largeArc} 0 ${ix1} ${iy1} Z`;
+
+    const color = colors[i % colors.length];
+    
+    // Draw Slice
+    svg.insertAdjacentHTML("beforeend", `<path d="${pathData}" fill="${color}" stroke="#fff" stroke-width="2"><title>${htmlEscape(label)}: ${fmt(count)} (${(pct*100).toFixed(2)}%)</title></path>`);
+
+    const midAngle = startAngle + angle / 2;
+    const formattedPct = (pct * 100).toFixed(1) + "%";
+
+    // ALL Slices (Large & Small) are rendered completely outside to prevent overlap/cropping
+    const labelObj = {
+      label,
+      count,
+      pct: formattedPct,
+      midAngle,
+      color,
+      anchorX: cx + r * Math.cos(midAngle),
+      anchorY: cy + r * Math.sin(midAngle),
+      idealY: cy + (r + 25) * Math.sin(midAngle)
+    };
+
+    if (Math.cos(midAngle) >= 0) {
+      externalLabelsRight.push(labelObj);
+    } else {
+      externalLabelsLeft.push(labelObj);
+    }
+
+    startAngle = endAngle;
+  });
+
+  // Force-Directed Y-Spacing Algorithm to eliminate vertical label collision
+  function adjustYPositions(labels) {
+    if (!labels.length) return;
+    labels.sort((a, b) => a.idealY - b.idealY);
+    const minGap = 24;
+    for (let i = 0; i < labels.length; i++) {
+      labels[i].y = labels[i].idealY;
+      if (i > 0 && labels[i].y < labels[i - 1].y + minGap) {
+        labels[i].y = labels[i - 1].y + minGap;
+      }
+    }
+  }
+
+  adjustYPositions(externalLabelsRight);
+  adjustYPositions(externalLabelsLeft);
+
+  // Render Right-Side Outside Callouts
+  externalLabelsRight.forEach(item => {
+    const lx1 = item.anchorX;
+    const ly1 = item.anchorY;
+    const lx2 = cx + r + 35;
+    const ly2 = item.y;
+    const lx3 = lx2 + 25;
+
+    svg.insertAdjacentHTML("beforeend", `
+      <polyline points="${lx1},${ly1} ${lx2},${ly2} ${lx3},${ly2}" fill="none" stroke="${item.color}" stroke-width="1.5" opacity="0.85"></polyline>
+      <circle cx="${lx1}" cy="${ly1}" r="3" fill="${item.color}"></circle>
+      <text x="${lx3 + 6}" y="${ly2 - 2}" text-anchor="start" fill="#172033" style="font-size:11px;font-weight:600;">${htmlEscape(item.label)}</text>
+      <text x="${lx3 + 6}" y="${ly2 + 10}" text-anchor="start" fill="${item.color}" style="font-size:10px;font-weight:bold;">${item.pct}</text>
+    `);
+  });
+
+  // Render Left-Side Outside Callouts
+  externalLabelsLeft.forEach(item => {
+    const lx1 = item.anchorX;
+    const ly1 = item.anchorY;
+    const lx2 = cx - r - 35;
+    const ly2 = item.y;
+    const lx3 = lx2 - 25;
+
+    svg.insertAdjacentHTML("beforeend", `
+      <polyline points="${lx1},${ly1} ${lx2},${ly2} ${lx3},${ly2}" fill="none" stroke="${item.color}" stroke-width="1.5" opacity="0.85"></polyline>
+      <circle cx="${lx1}" cy="${ly1}" r="3" fill="${item.color}"></circle>
+      <text x="${lx3 - 6}" y="${ly2 - 2}" text-anchor="end" fill="#172033" style="font-size:11px;font-weight:600;">${htmlEscape(item.label)}</text>
+      <text x="${lx3 - 6}" y="${ly2 + 10}" text-anchor="end" fill="${item.color}" style="font-size:10px;font-weight:bold;">${item.pct}</text>
+    `);
+  });
+
+  // Donut Hole Center Text
+  svg.insertAdjacentHTML("beforeend", `
+    <text x="${cx}" y="${cy-4}" text-anchor="middle" fill="#172033" style="font-size:18px;font-weight:bold;">${fmt(totalMail)}</text>
+    <text x="${cx}" y="${cy+14}" text-anchor="middle" fill="#6b7280" style="font-size:11px;">Total Mail</text>
+  `);
+}
+
+function drawMailLineChart(monthlyTotals){
+  const svg=document.getElementById("mailLineChart"), W=650, H=310, pad={l:50, r:25, t:25, b:40}; svg.innerHTML="";
+  if(!monthlyTotals.length) return;
+  const vals = monthlyTotals.map(r=>r.total);
+  const max = Math.max(...vals, 100), innerW = W - pad.l - pad.r, innerH = H - pad.t - pad.b;
+  
+  for(let i=0; i<5; i++){
+    let y = pad.t + innerH * i / 4, v = Math.round(max * (1 - i / 4));
+    svg.insertAdjacentHTML("beforeend", `<line class="axis" x1="${pad.l}" y1="${y}" x2="${W-pad.r}" y2="${y}"></line><text class="label" x="${pad.l-7}" y="${y+4}" text-anchor="end">${fmt(v)}</text>`);
+  }
+  let pts = monthlyTotals.map((r, i) => {
+    let x = monthlyTotals.length === 1 ? pad.l + innerW / 2 : pad.l + innerW * i / (monthlyTotals.length - 1);
+    let y = pad.t + innerH - (r.total / max) * innerH;
+    return [x, y, r.total, r.month];
+  });
+  svg.insertAdjacentHTML("beforeend", `<polyline points="${pts.map(p=>p[0]+","+p[1]).join(" ")}" fill="none" stroke="#2563eb" stroke-width="3"></polyline>`);
+  pts.forEach(p => {
+    svg.insertAdjacentHTML("beforeend", `<circle cx="${p[0]}" cy="${p[1]}" r="4" fill="#fff" stroke="#2563eb" stroke-width="3"></circle><text class="label" x="${p[0]}" y="${H-15}" text-anchor="middle">${p[3].slice(0,3)}</text><text class="value" x="${p[0]}" y="${p[1]-9}" text-anchor="middle">${fmt(p[2])}</text>`);
+  });
 }
 
 function drawBars(entries){
@@ -438,7 +781,7 @@ function resetFilters(){
   render();
 }
 
-const months=monthOrder.filter(m=>DATA.some(r=>r.month===m) || EMAIL_DATA.some(r=>r.month===m) || SLA_ABANDON_DATA.some(r=>r.month===m));
+const months=monthOrder.filter(m=>DATA.some(r=>r.month===m) || EMAIL_DATA.some(r=>r.month===m) || SLA_ABANDON_DATA.some(r=>r.month===m) || MAIL_DATA.some(r=>r.month===m));
 document.getElementById("monthFilter").innerHTML=`<option value="All">All Months</option>`+months.map(m=>`<option>${m}</option>`).join("");
 uniq(DATA.map(r=>r.program)).sort().forEach(p=>document.getElementById("programFilter").insertAdjacentHTML("beforeend",`<option>${htmlEscape(p)}</option>`));
 
