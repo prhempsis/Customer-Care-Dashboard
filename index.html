@@ -1,3 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Monthly Output Dashboard</title>
+<style>
+:root{--bg:#f5f7fb;--card:rgba(255, 255, 255, 0.92);--text:#172033;--muted:#6b7280;--line:#e5e7eb;--accent:#2563eb;--accent2:#0f766e;--danger:#dc2626;--shadow:0 8px 24px rgba(15,23,42,.12)}
+*{box-sizing:border-box} 
+body{
+  margin:0;
+  font-family:Inter,Segoe UI,Arial,sans-serif;
+  color:var(--text);
+  background-image: linear-gradient(rgba(15, 23, 42, 0.35), rgba(15, 23, 42, 0.35)), url('https://images.unsplash.com/photo-1557683316-973673baf926?q=80&w=1920&auto=format&fit=crop');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+  min-height: 100vh;
+}
+header{
+  background:rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(8px);
+  border-bottom:1px solid var(--line);
+  padding:16px 28px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:20px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+h1{margin:0;font-size:25px}.sub{color:var(--muted);font-size:13px;margin-top:5px}
+.nav-tabs{display:flex;gap:8px;background:#f1f5f9;padding:4px;border-radius:10px;border:1px solid var(--line)}
+.tab-btn{border:0;background:transparent;padding:8px 16px;font-weight:600;color:var(--muted);border-radius:8px;cursor:pointer;transition:all .2s ease}
+.tab-btn.active{background:#fff;color:var(--accent);box-shadow:0 2px 6px rgba(0,0,0,.08)}
+.controls{display:flex;gap:12px;align-items:center;flex-wrap:wrap} select,input{border:1px solid #d1d5db;border-radius:8px;background:#fff;padding:9px 11px;color:var(--text)}
+button{border:0;border-radius:8px;padding:10px 14px;background:var(--accent);color:#fff;font-weight:600;cursor:pointer}button.secondary{background:#eef2ff;color:#1e40af}
+.brand-logo{height:42px;width:auto;display:block;margin-left:8px;object-fit:contain}
+main{padding:22px 28px;max-width:1500px;margin:auto}
+.tab-content{display:none}.tab-content.active{display:block}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:15px;margin-bottom:18px}
+.card{
+  background:var(--card);
+  backdrop-filter: blur(8px);
+  border:1px solid rgba(255, 255, 255, 0.6);
+  border-radius:12px;
+  padding:18px;
+  box-shadow:var(--shadow)
+}
+.kpi-label{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.06em}.kpi{font-size:29px;font-weight:750;margin-top:7px}.delta{font-size:12px;color:var(--accent2);margin-top:5px}
+.layout{display:grid;grid-template-columns:1.45fr 1fr;gap:18px;margin-bottom:18px}
+.layout-single{display:grid;grid-template-columns:1fr;gap:18px;margin-bottom:18px}
+.card h2{font-size:16px;margin:0 0 14px}.chartbox{height:460px;position:relative}
+svg{width:100%;height:100%;overflow:visible}.axis{stroke:#dbe1ea;stroke-width:1}.bar{fill:#2563eb;opacity:.88}.bar:hover{opacity:1}.label{font-size:11px;fill:#4b5563}.value{font-size:11px;fill:#111827;font-weight:600}
+.legend{font-size:12px;color:var(--muted);margin-top:8px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.legend-item{display:flex;align-items:center;gap:6px}
+.legend-color{width:12px;height:12px;border-radius:3px;display:inline-block}
+.table-wrap{overflow:auto;max-height:500px}table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:10px 9px;border-bottom:1px solid var(--line);text-align:left}th{position:sticky;top:0;background:rgba(248,250,252,0.95);z-index:1}td.num,th.num{text-align:right}
+.badge{padding:4px 7px;border-radius:999px;background:#eef2ff;color:#1d4ed8;font-size:11px}
+.empty{color:var(--muted);padding:20px;text-align:center}
+@media(max-width:950px){.grid{grid-template-columns:repeat(2,1fr)}.layout{grid-template-columns:1fr}}
+@media(max-width:600px){header{align-items:flex-start;flex-direction:column}.grid{grid-template-columns:1fr}main{padding:15px}.chartbox{height:280px}}
+</style>
+</head>
+<body>
 <header>
   <div>
     <h1>Monthly Output Dashboard</h1>
@@ -12,7 +77,743 @@
     <select id="monthFilter"></select>
     <select id="programFilter"><option value="All">All Programs</option></select>
     <button class="secondary" onclick="resetFilters()">Reset</button>
-    <!-- TOP RIGHT LOGO WATERMARK -->
-    <img src="Spinnaker-Logo.PNG" alt="Spinnaker Logo" class="brand-logo">
+    <img src="Spinnaker-Logo" alt="Spinnaker Logo" class="brand-logo">
   </div>
 </header>
+<main>
+  <!-- CALL CENTER TAB -->
+  <div id="tab-callcenter" class="tab-content active">
+    <section class="grid">
+      <div class="card"><div class="kpi-label">Total Output</div><div id="total" class="kpi">0</div><div id="period" class="delta">All months</div></div>
+      <div class="card"><div class="kpi-label">Programs</div><div id="programs" class="kpi">0</div><div class="delta">Programs with recorded volume</div></div>
+      <div class="card"><div class="kpi-label">Top Program</div><div id="topProgram" class="kpi" style="font-size:22px">—</div><div id="topValue" class="delta">0</div></div>
+      <div class="card"><div class="kpi-label">Call Dispositions</div><div id="dispTotal" class="kpi">0</div><div class="delta">Recorded disposition count</div></div>
+    </section>
+
+    <section class="grid">
+      <div class="card"><div class="kpi-label">Average SLA Rate</div><div id="avgSlaRate" class="kpi">0%</div><div class="delta">Overall compliance average</div></div>
+      <div class="card"><div class="kpi-label">Peak SLA Month</div><div id="peakSlaMonth" class="kpi" style="font-size:22px">—</div><div id="peakSlaVal" class="delta">0%</div></div>
+      <div class="card"><div class="kpi-label">Average Abandonment</div><div id="avgAbandonRate" class="kpi">0%</div><div class="delta">Overall average rate</div></div>
+      <div class="card"><div class="kpi-label">Highest Abandonment</div><div id="maxAbandonMonth" class="kpi" style="font-size:22px">—</div><div id="maxAbandonVal" class="delta">0%</div></div>
+    </section>
+
+    <section class="layout-single">
+      <div class="card">
+        <h2>SLA & Abandonment Rate (Clustered Column)</h2>
+        <div class="chartbox"><svg id="clusteredBarChart" viewBox="0 0 900 330" preserveAspectRatio="none"></svg></div>
+        <div class="legend">
+          <div class="legend-item"><span class="legend-color" style="background:#2563eb;"></span> SLA Rate (%)</div>
+          <div class="legend-item"><span class="legend-color" style="background:#dc2626;"></span> Abandonment Rate (%)</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="layout">
+      <div class="card">
+        <h2>Program Output</h2>
+        <div class="chartbox"><svg id="barChart" viewBox="0 0 900 310" preserveAspectRatio="none"></svg></div>
+        <div class="legend">Sorted highest to lowest. Use the Program filter to focus on one program.</div>
+      </div>
+      <div class="card">
+        <h2>Monthly Trend</h2>
+        <div class="chartbox"><svg id="lineChart" viewBox="0 0 650 310" preserveAspectRatio="none"></svg></div>
+        <div class="legend">Total output by month.</div>
+      </div>
+    </section>
+
+    <section class="layout">
+      <div class="card">
+        <h2>Top 10 Programs</h2>
+        <div class="table-wrap"><table><thead><tr><th>Rank</th><th>Program</th><th class="num">Output</th></tr></thead><tbody id="topTable"></tbody></table></div>
+      </div>
+      <div class="card">
+        <h2>Call Disposition Summary</h2>
+        <div class="table-wrap"><table><thead><tr><th>Disposition</th><th class="num">Count</th></tr></thead><tbody id="dispTable"></tbody></table></div>
+      </div>
+    </section>
+
+    <section class="layout-single">
+      <div class="card">
+        <h2>SLA and Abandonment Monthly Data</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Month</th>
+                <th class="num">SLA Rate</th>
+                <th class="num">Abandonment Rate</th>
+              </tr>
+            </thead>
+            <tbody id="slaTable"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- EMAIL SUPPORT TAB -->
+  <div id="tab-email" class="tab-content">
+    <section class="grid">
+      <div class="card"><div class="kpi-label">Total Emails</div><div id="emailTotal" class="kpi">0</div><div id="emailPeriod" class="delta">All months</div></div>
+      <div class="card"><div class="kpi-label">Avg Monthly Emails</div><div id="emailAvg" class="kpi">0</div><div class="delta">Monthly volume average</div></div>
+      <div class="card"><div class="kpi-label">Average SLA %</div><div id="emailSlaAvg" class="kpi">0%</div><div class="delta">Overall compliance average</div></div>
+      <div class="card"><div class="kpi-label">Peak Volume Month</div><div id="emailPeak" class="kpi" style="font-size:22px">—</div><div id="emailPeakVal" class="delta">0 emails</div></div>
+    </section>
+
+    <section class="layout">
+      <div class="card">
+        <h2>Monthly Email Volume Trend</h2>
+        <div class="chartbox"><svg id="emailLineChart" viewBox="0 0 900 310" preserveAspectRatio="none"></svg></div>
+        <div class="legend">Total email support tickets/messages processed per month.</div>
+      </div>
+      <div class="card">
+        <h2>SLA Compliance Trend (%)</h2>
+        <div class="chartbox"><svg id="emailSlaChart" viewBox="0 0 650 310" preserveAspectRatio="none"></svg></div>
+        <div class="legend">Percentage of email SLA compliance target achieved per month.</div>
+      </div>
+    </section>
+
+    <section class="layout-single">
+      <div class="card">
+        <h2>Email Support Monthly Metrics</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Month</th>
+                <th class="num">Number of Emails</th>
+                <th class="num">SLA Compliance %</th>
+              </tr>
+            </thead>
+            <tbody id="emailTable"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- MAIL TAB -->
+  <div id="tab-mail" class="tab-content">
+    <section class="grid">
+      <div class="card"><div class="kpi-label">Total Mail Volume</div><div id="mailTotal" class="kpi">0</div><div id="mailPeriod" class="delta">All months</div></div>
+      <div class="card"><div class="kpi-label">Avg Monthly Mail</div><div id="mailAvg" class="kpi">0</div><div class="delta">Monthly volume average</div></div>
+      <div class="card"><div class="kpi-label">Top Mail Type</div><div id="mailTopType" class="kpi" style="font-size:20px">—</div><div id="mailTopVal" class="delta">0 items</div></div>
+      <div class="card"><div class="kpi-label">Peak Volume Month</div><div id="mailPeak" class="kpi" style="font-size:22px">—</div><div id="mailPeakVal" class="delta">0 items</div></div>
+    </section>
+
+    <section class="layout">
+      <div class="card">
+        <h2>Mail Distribution by Type</h2>
+        <div class="chartbox"><svg id="mailPieChart" viewBox="0 0 1000 460" preserveAspectRatio="xMidYMid meet"></svg></div>
+      </div>
+      <div class="card">
+        <h2>Mail Volume Trend by Month</h2>
+        <div class="chartbox"><svg id="mailLineChart" viewBox="0 0 650 310" preserveAspectRatio="none"></svg></div>
+        <div class="legend">Total physical mail items received per month.</div>
+      </div>
+    </section>
+
+    <section class="layout">
+      <div class="card">
+        <h2>Program Share of Mails Received (&gt; 1%)</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Program</th>
+                <th class="num">Mail Share (%)</th>
+              </tr>
+            </thead>
+            <tbody id="mailProgramTable"></tbody>
+          </table>
+        </div>
+        <div class="legend">Filtered dynamically: shows only programs exceeding 1% for the selected month(s).</div>
+      </div>
+      <div class="card">
+        <h2>Mail Breakdown by Type</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Mail Type</th>
+                <th class="num">Total Items</th>
+                <th class="num">Percentage</th>
+              </tr>
+            </thead>
+            <tbody id="mailTypeTable"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="layout-single">
+      <div class="card">
+        <h2>Monthly Mail Totals</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Month</th>
+                <th class="num">Total Received</th>
+              </tr>
+            </thead>
+            <tbody id="mailMonthlyTable"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </div>
+</main>
+
+<script>
+const DATA = [{"month": "January", "program": "AHOY", "count": 12, "disposition": "", "dispositionCount": 0}, {"month": "January", "program": "Cabrillo", "count": 19, "disposition": "", "dispositionCount": 0}, {"month": "January", "program": "Coterie", "count": 315, "disposition": "", "dispositionCount": 0}, {"month": "January", "program": "HDVI", "count": 68, "disposition": "", "dispositionCount": 0}, {"month": "January", "program": "Hippo", "count": 279, "disposition": "", "dispositionCount": 0}, {"month": "January", "program": "Mile Auto", "count": 27, "disposition": "", "dispositionCount": 0}, {"month": "January", "program": "MSI", "count": 509, "disposition": "", "dispositionCount": 0}, {"month": "January", "program": "MSI Arcana", "count": 1, "disposition": "", "dispositionCount": 0}, {"month": "January", "program": "MSI TPA Alarcity", "count": 33, "disposition": "", "dispositionCount": 0}, {"month": "January", "program": "Rivington", "count": 8, "disposition": "", "dispositionCount": 0}, {"month": "January", "program": "Roamly", "count": 37, "disposition": "", "dispositionCount": 0}, {"month": "January", "program": "Simply Business", "count": 61, "disposition": "", "dispositionCount": 0}, {"month": "January", "program": "Team Focus", "count": 5, "disposition": "", "dispositionCount": 0}, {"month": "January", "program": "Atlas", "count": 5, "disposition": "", "dispositionCount": 0}, {"month": "January", "program": "Accelerant", "count": 0, "disposition": "", "dispositionCount": 0}, {"month": "January", "program": "Annex", "count": 0, "disposition": "", "dispositionCount": 0}, {"month": "January", "program": "MSI - EC", "count": 0, "disposition": "", "dispositionCount": 0}, {"month": "January", "program": "AmRisc", "count": 0, "disposition": "", "dispositionCount": 0}, {"month": "February", "program": "AHOY", "count": 11, "disposition": "", "dispositionCount": 0}, {"month": "February", "program": "Cabrillo", "count": 19, "disposition": "", "dispositionCount": 0}, {"month": "February", "program": "Coterie", "count": 204, "disposition": "", "dispositionCount": 0}, {"month": "February", "program": "HDVI", "count": 55, "disposition": "", "dispositionCount": 0}, {"month": "February", "program": "Hippo", "count": 231, "disposition": "", "dispositionCount": 0}, {"month": "February", "program": "Mile Auto", "count": 15, "disposition": "", "dispositionCount": 0}, {"month": "February", "program": "MSI", "count": 478, "disposition": "", "dispositionCount": 0}, {"month": "February", "program": "MSI Arcana", "count": 0, "disposition": "", "dispositionCount": 0}, {"month": "February", "program": "MSI TPA Alarcity", "count": 29, "disposition": "", "dispositionCount": 0}, {"month": "February", "program": "Rivington", "count": 8, "disposition": "", "dispositionCount": 0}, {"month": "February", "program": "Roamly", "count": 36, "disposition": "", "dispositionCount": 0}, {"month": "February", "program": "Simply Business", "count": 69, "disposition": "", "dispositionCount": 0}, {"month": "February", "program": "Team Focus", "count": 4, "disposition": "", "dispositionCount": 0}, {"month": "February", "program": "Atlas", "count": 3, "disposition": "", "dispositionCount": 0}, {"month": "February", "program": "Accelerant", "count": 0, "disposition": "", "dispositionCount": 0}, {"month": "February", "program": "Annex", "count": 0, "disposition": "", "dispositionCount": 0}, {"month": "February", "program": "MSI - EC", "count": 0, "disposition": "", "dispositionCount": 0}, {"month": "February", "program": "AmRisc", "count": 0, "disposition": "", "dispositionCount": 0}, {"month": "March", "program": "AHOY", "count": 23, "disposition": "", "dispositionCount": 0}, {"month": "March", "program": "Cabrillo", "count": 20, "disposition": "", "dispositionCount": 0}, {"month": "March", "program": "Coterie", "count": 320, "disposition": "", "dispositionCount": 0}, {"month": "March", "program": "HDVI", "count": 75, "disposition": "", "dispositionCount": 0}, {"month": "March", "program": "Hippo", "count": 396, "disposition": "", "dispositionCount": 0}, {"month": "March", "program": "Mile Auto", "count": 15, "disposition": "", "dispositionCount": 0}, {"month": "March", "program": "MSI", "count": 373, "disposition": "", "dispositionCount": 0}, {"month": "March", "program": "MSI Arcana", "count": 1, "disposition": "", "dispositionCount": 0}, {"month": "March", "program": "MSI TPA Alarcity", "count": 17, "disposition": "", "dispositionCount": 0}, {"month": "March", "program": "Rivington", "count": 4, "disposition": "", "dispositionCount": 0}, {"month": "March", "program": "Roamly", "count": 81, "disposition": "", "dispositionCount": 0}, {"month": "March", "program": "Simply Business", "count": 136, "disposition": "", "dispositionCount": 0}, {"month": "March", "program": "Team Focus", "count": 9, "disposition": "", "dispositionCount": 0}, {"month": "March", "program": "Atlas", "count": 14, "disposition": "", "dispositionCount": 0}, {"month": "March", "program": "Accelerant", "count": 22, "disposition": "", "dispositionCount": 0}, {"month": "March", "program": "Annex", "count": 0, "disposition": "", "dispositionCount": 0}, {"month": "March", "program": "MSI - EC", "count": 0, "disposition": "", "dispositionCount": 0}, {"month": "March", "program": "AmRisc", "count": 0, "disposition": "", "dispositionCount": 0}, {"month": "April", "program": "AHOY", "count": 19, "disposition": "Call Transferred", "dispositionCount": 1486}, {"month": "April", "program": "Cabrillo", "count": 11, "disposition": "Referred to Email / Program Not Found", "dispositionCount": 325}, {"month": "April", "program": "Coterie", "count": 388, "disposition": "Hung Up", "dispositionCount": 245}, {"month": "April", "program": "HDVI", "count": 76, "disposition": "Disconnected", "dispositionCount": 132}, {"month": "April", "program": "Hippo", "count": 403, "disposition": "N/A", "dispositionCount": 222}, {"month": "April", "program": "Mile Auto", "count": 33, "disposition": "Wrong Number", "dispositionCount": 18}, {"month": "April", "program": "MSI", "count": 373, "disposition": "", "dispositionCount": 0}, {"month": "April", "program": "MSI Arcana", "count": 0, "disposition": "", "dispositionCount": 0}, {"month": "April", "program": "MSI TPA Alarcity", "count": 9, "disposition": "", "dispositionCount": 0}, {"month": "April", "program": "Rivington", "count": 2, "disposition": "", "dispositionCount": 0}, {"month": "April", "program": "Roamly", "count": 58, "disposition": "", "dispositionCount": 0}, {"month": "April", "program": "Simply Business", "count": 124, "disposition": "", "dispositionCount": 0}, {"month": "April", "program": "Team Focus", "count": 8, "disposition": "", "dispositionCount": 0}, {"month": "April", "program": "Atlas", "count": 19, "disposition": "", "dispositionCount": 0}, {"month": "April", "program": "Accelerant", "count": 55, "disposition": "", "dispositionCount": 0}, {"month": "April", "program": "Annex", "count": 7, "disposition": "", "dispositionCount": 0}, {"month": "April", "program": "MSI - EC", "count": 5, "disposition": "", "dispositionCount": 0}, {"month": "April", "program": "AmRisc", "count": 2, "disposition": "", "dispositionCount": 0}, {"month": "May", "program": "AHOY", "count": 15, "disposition": "Call Transferred", "dispositionCount": 1225}, {"month": "May", "program": "Cabrillo", "count": 4, "disposition": "Referred to Email / Program Not Found", "dispositionCount": 277}, {"month": "May", "program": "Coterie", "count": 344, "disposition": "Hung Up", "dispositionCount": 161}, {"month": "May", "program": "HDVI", "count": 61, "disposition": "Disconnected", "dispositionCount": 48}, {"month": "May", "program": "Hippo", "count": 242, "disposition": "Other", "dispositionCount": 35}, {"month": "May", "program": "Mile Auto", "count": 7, "disposition": "N/A", "dispositionCount": 18}, {"month": "May", "program": "MSI", "count": 224, "disposition": "Wrong Number", "dispositionCount": 15}, {"month": "May", "program": "MSI Arcana", "count": 1, "disposition": "", "dispositionCount": 0}, {"month": "May", "program": "MSI TPA Alarcity", "count": 20, "disposition": "", "dispositionCount": 0}, {"month": "May", "program": "Rivington", "count": 3, "disposition": "", "dispositionCount": 0}, {"month": "May", "program": "Roamly", "count": 77, "disposition": "", "dispositionCount": 0}, {"month": "May", "program": "Simply Business", "count": 30, "disposition": "", "dispositionCount": 0}, {"month": "May", "program": "Team Focus", "count": 6, "disposition": "", "dispositionCount": 0}, {"month": "May", "program": "Atlas", "count": 72, "disposition": "", "dispositionCount": 0}, {"month": "May", "program": "Accelerant", "count": 83, "disposition": "", "dispositionCount": 0}, {"month": "May", "program": "Annex", "count": 17, "disposition": "", "dispositionCount": 0}, {"month": "May", "program": "MSI - EC", "count": 7, "disposition": "", "dispositionCount": 0}, {"month": "May", "program": "AmRisc", "count": 0, "disposition": "", "dispositionCount": 0}, {"month": "June", "program": "AHOY", "count": 26, "disposition": "Call Transferred", "dispositionCount": 1384}, {"month": "June", "program": "Cabrillo", "count": 5, "disposition": "Referred to Email / Program Not Found", "dispositionCount": 263}, {"month": "June", "program": "Coterie", "count": 339, "disposition": "Other", "dispositionCount": 63}, {"month": "June", "program": "HDVI", "count": 77, "disposition": "Wrong Number", "dispositionCount": 26}, {"month": "June", "program": "Hippo", "count": 264, "disposition": "Hung Up", "dispositionCount": 194}, {"month": "June", "program": "Mile Auto", "count": 14, "disposition": "Disconnected", "dispositionCount": 70}, {"month": "June", "program": "MSI", "count": 357, "disposition": "Test", "dispositionCount": 15}, {"month": "June", "program": "MSI Arcana", "count": 0, "disposition": "N/A", "dispositionCount": 23}, {"month": "June", "program": "MSI TPA Alarcity", "count": 11, "disposition": "", "dispositionCount": 0}, {"month": "June", "program": "Rivington", "count": 1, "disposition": "", "dispositionCount": 0}, {"month": "June", "program": "Roamly", "count": 63, "disposition": "", "dispositionCount": 0}, {"month": "June", "program": "Simply Business", "count": 49, "disposition": "", "dispositionCount": 0}, {"month": "June", "program": "Team Focus", "count": 3, "disposition": "", "dispositionCount": 0}, {"month": "June", "program": "Atlas", "count": 52, "disposition": "", "dispositionCount": 0}, {"month": "June", "program": "Accelerant", "count": 114, "disposition": "", "dispositionCount": 0}, {"month": "June", "program": "Annex", "count": 30, "disposition": "", "dispositionCount": 0}, {"month": "June", "program": "MSI - EC", "count": 9, "disposition": "", "dispositionCount": 0}, {"month": "June", "program": "AmRisc", "count": 0, "disposition": "", "dispositionCount": 0}, {"month": "July", "program": "AHOY", "count": 21, "disposition": "Call Transferred", "dispositionCount": 1432}, {"month": "July", "program": "Cabrillo", "count": 10, "disposition": "Other", "dispositionCount": 74}, {"month": "July", "program": "Coterie", "count": 304, "disposition": "Referred to Email / Program Not Found", "dispositionCount": 98}, {"month": "July", "program": "HDVI", "count": 65, "disposition": "Hung Up", "dispositionCount": 180}, {"month": "July", "program": "Hippo", "count": 298, "disposition": "Disconnected", "dispositionCount": 57}, {"month": "July", "program": "Mile Auto", "count": 10, "disposition": "N/A", "dispositionCount": 16}, {"month": "July", "program": "MSI", "count": 372, "disposition": "Test", "dispositionCount": 11}, {"month": "July", "program": "MSI Arcana", "count": 0, "disposition": "Wrong Number", "dispositionCount": 12}, {"month": "July", "program": "MSI TPA Alarcity", "count": 10, "disposition": "Referred to Email", "dispositionCount": 227}, {"month": "July", "program": "Rivington", "count": 1, "disposition": "Program Not Found", "dispositionCount": 17}, {"month": "July", "program": "Roamly", "count": 89, "disposition": "", "dispositionCount": 0}, {"month": "July", "program": "Simply Business", "count": 82, "disposition": "", "dispositionCount": 0}, {"month": "July", "program": "Team Focus", "count": 4, "disposition": "", "dispositionCount": 0}, {"month": "July", "program": "Atlas", "count": 17, "disposition": "", "dispositionCount": 0}, {"month": "July", "program": "Accelerant", "count": 147, "disposition": "", "dispositionCount": 0}, {"month": "July", "program": "Annex", "count": 22, "disposition": "", "dispositionCount": 0}, {"month": "July", "program": "MSI - EC", "count": 21, "disposition": "", "dispositionCount": 0}, {"month": "July", "program": "AmRisc", "count": 2, "disposition": "", "dispositionCount": 0}, {"month": "July", "program": "Sola", "count": 4, "disposition": "", "dispositionCount": 0}, {"month": "August", "program": "AHOY", "count": 11, "disposition": "Call Transferred", "dispositionCount": 1588}, {"month": "August", "program": "Cabrillo", "count": 27, "disposition": "Hung Up", "dispositionCount": 205}, {"month": "August", "program": "Coterie", "count": 326, "disposition": "Referred to Email", "dispositionCount": 358}, {"month": "August", "program": "HDVI", "count": 85, "disposition": "Disconnected", "dispositionCount": 51}, {"month": "August", "program": "Hippo", "count": 232, "disposition": "Test", "dispositionCount": 166}, {"month": "August", "program": "Mile Auto", "count": 19, "disposition": "Other", "dispositionCount": 100}, {"month": "August", "program": "MSI", "count": 457, "disposition": "Program Not Found", "dispositionCount": 11}, {"month": "August", "program": "MSI Arcana", "count": 0, "disposition": "Wrong Number", "dispositionCount": 13}, {"month": "August", "program": "MSI TPA Alarcity", "count": 0, "disposition": "", "dispositionCount": 0}, {"month": "August", "program": "Rivington", "count": 4, "disposition": "", "dispositionCount": 0}, {"month": "August", "program": "Roamly", "count": 43, "disposition": "", "dispositionCount": 0}, {"month": "August", "program": "Simply Business", "count": 126, "disposition": "", "dispositionCount": 0}, {"month": "August", "program": "Team Focus", "count": 3, "disposition": "", "dispositionCount": 0}, {"month": "August", "program": "Atlas", "count": 11, "disposition": "", "dispositionCount": 0}, {"month": "August", "program": "Accelerant", "count": 130, "disposition": "", "dispositionCount": 0}, {"month": "August", "program": "Annex", "count": 11, "disposition": "", "dispositionCount": 0}, {"month": "August", "program": "MSI - EC", "count": 20, "disposition": "", "dispositionCount": 0}, {"month": "August", "program": "AmRisc", "count": 0, "disposition": "", "dispositionCount": 0}, {"month": "August", "program": "McNaire", "count": 9, "disposition": "", "dispositionCount": 0}, {"month": "August", "program": "Sola", "count": 4, "disposition": "", "dispositionCount": 0}, {"month": "August", "program": "5-Star", "count": 1, "disposition": "", "dispositionCount": 0}, {"month": "August", "program": "Boost Cyber", "count": 4, "disposition": "", "dispositionCount": 0}, {"month": "August", "program": "Outdoorsy", "count": 0, "disposition": "", "dispositionCount": 0}, {"month": "August", "program": "Battleface", "count": 0, "disposition": "", "dispositionCount": 0}, {"month": "September", "program": "AHOY", "count": 16, "disposition": "Call Transferred", "dispositionCount": 1632}, {"month": "September", "program": "Cabrillo", "count": 26, "disposition": "Program Not Found", "dispositionCount": 18}, {"month": "September", "program": "Coterie", "count": 323, "disposition": "N/A", "dispositionCount": 153}, {"month": "September", "program": "HDVI", "count": 98, "disposition": "Referred to Email", "dispositionCount": 341}, {"month": "September", "program": "Hippo", "count": 340, "disposition": "Wrong Number", "dispositionCount": 8}, {"month": "September", "program": "Mile Auto", "count": 16, "disposition": "Other", "dispositionCount": 73}, {"month": "September", "program": "MSI", "count": 399, "disposition": "Test", "dispositionCount": 203}, {"month": "September", "program": "MSI Arcana", "count": 0, "disposition": "Hung Up", "dispositionCount": 175}, {"month": "September", "program": "MSI TPA Alarcity", "count": 0, "disposition": "Disconnected", "dispositionCount": 42}, {"month": "September", "program": "Rivington", "count": 5, "disposition": "", "dispositionCount": 0}, {"month": "September", "program": "Roamly", "count": 69, "disposition": "", "dispositionCount": 0}, {"month": "September", "program": "Simply Business", "count": 144, "disposition": "", "dispositionCount": 0}, {"month": "September", "program": "Team Focus", "count": 9, "disposition": "", "dispositionCount": 0}, {"month": "September", "program": "Atlas", "count": 9, "disposition": "", "dispositionCount": 0}, {"month": "September", "program": "Accelerant", "count": 150, "disposition": "", "dispositionCount": 0}, {"month": "September", "program": "Annex", "count": 14, "disposition": "", "dispositionCount": 0}, {"month": "September", "program": "MSI - EC", "count": 20, "disposition": "", "dispositionCount": 0}, {"month": "September", "program": "AmRisc", "count": 2, "disposition": "", "dispositionCount": 0}, {"month": "September", "program": "McNaire", "count": 6, "disposition": "", "dispositionCount": 0}, {"month": "September", "program": "Sola", "count": 5, "disposition": "", "dispositionCount": 0}, {"month": "September", "program": "5-Star", "count": 3, "disposition": "", "dispositionCount": 0}, {"month": "September", "program": "Boost Cyber", "count": 5, "disposition": "", "dispositionCount": 0}, {"month": "September", "program": "Outdoorsy", "count": 0, "disposition": "", "dispositionCount": 0}, {"month": "September", "program": "Battleface", "count": 0, "disposition": "", "dispositionCount": 0}];
+
+const EMAIL_DATA = [
+  {"month": "January", "emails": 670, "sla": 77.00},
+  {"month": "February", "emails": 1137, "sla": 86.00},
+  {"month": "March", "emails": 1058, "sla": 99.00},
+  {"month": "April", "emails": 769, "sla": 92.00},
+  {"month": "May", "emails": 1324, "sla": 99.00},
+  {"month": "June", "emails": 1320, "sla": 87.00},
+  {"month": "July", "emails": 1191, "sla": 87.00},
+  {"month": "August", "emails": 1531, "sla": 95.00},
+  {"month": "September", "emails": 1144, "sla": 95.00}
+];
+
+const PROGRAM_MAIL_PCT_DATA = [
+  {"program": "Internal", "January": 43.13, "February": 42.46, "March": 32.31, "April": 43.57, "May": 23.73, "June": 22.32, "July": 12.87, "August": 11.11, "September": 13.72},
+  {"program": "Accelerant", "January": 22.88, "February": 13.97, "March": 22.48, "April": 20.38, "May": 19.49, "June": 27.83, "July": 25.74, "August": 26.75, "September": 38.50},
+  {"program": "MSI", "January": 15.03, "February": 21.36, "March": 16.15, "April": 20.38, "May": 21.19, "June": 26.30, "July": 18.81, "August": 27.98, "September": 25.66},
+  {"program": "Coterie", "January": 3.27, "February": 3.83, "March": 4.68, "April": 9.72, "May": 9.23, "June": 5.81, "July": 16.34, "August": 8.23, "September": 6.19},
+  {"program": "Boost", "January": 7.19, "February": 5.75, "March": 9.13, "April": 8.78, "May": 4.20, "June": 6.73, "July": 2.48, "August": 4.53, "September": 6.64},
+  {"program": "HDVI", "January": 0.98, "February": 3.83, "March": 4.68, "April": 5.02, "May": 8.47, "June": 5.20, "July": 8.42, "August": 3.70, "September": 5.31},
+  {"program": "Hippo", "January": 0.00, "February": 2.19, "March": 2.10, "April": 4.70, "May": 2.54, "June": 0.61, "July": 1.98, "August": 1.65, "September": 1.33},
+  {"program": "Simply Business", "January": 0.33, "February": 2.19, "March": 0.93, "April": 2.19, "May": 1.69, "June": 1.53, "July": 4.46, "August": 1.65, "September": 2.21},
+  {"program": "AmRisc", "January": 3.59, "February": 2.19, "March": 2.81, "April": 1.57, "May": 2.54, "June": 1.53, "July": 1.49, "August": 0.41, "September": 0.00},
+  {"program": "Ahoy", "January": 0.00, "February": 0.27, "March": 0.23, "April": 0.31, "May": 0.00, "June": 0.61, "July": 0.00, "August": 0.41, "September": 0.00},
+  {"program": "Annex Flood", "January": 0.00, "February": 0.82, "March": 0.23, "April": 0.31, "May": 0.00, "June": 0.00, "July": 0.00, "August": 0.00, "September": 0.00},
+  {"program": "Cabrillo", "January": 0.98, "February": 0.00, "March": 0.00, "April": 0.00, "May": 0.00, "June": 0.00, "July": 0.00, "August": 0.00, "September": 0.00},
+  {"program": "Mile Auto", "January": 0.65, "February": 0.27, "March": 0.00, "April": 0.00, "May": 0.00, "June": 0.31, "July": 0.50, "August": 0.41, "September": 0.00},
+  {"program": "Acadian", "January": 0.00, "February": 0.00, "March": 0.00, "April": 0.00, "May": 0.00, "June": 0.00, "July": 0.00, "August": 0.00, "September": 0.00},
+  {"program": "Arrowhead", "January": 0.00, "February": 0.00, "March": 0.00, "April": 0.00, "May": 0.00, "June": 0.00, "July": 0.00, "August": 0.00, "September": 0.00},
+  {"program": "Atlas", "January": 0.00, "February": 0.00, "March": 0.00, "April": 0.00, "May": 0.00, "June": 0.00, "July": 0.00, "August": 0.00, "September": 0.44},
+  {"program": "Team Focus", "January": 0.00, "February": 0.00, "March": 0.00, "April": 0.00, "May": 0.00, "June": 0.00, "July": 0.00, "August": 0.00, "September": 0.00},
+  {"program": "Boost LPL", "January": 0.00, "February": 0.00, "March": 1.40, "April": 0.00, "May": 0.00, "June": 0.00, "July": 0.00, "August": 0.00, "September": 0.00},
+  {"program": "Battleface", "January": 0.00, "February": 0.00, "March": 0.00, "April": 0.00, "May": 0.00, "June": 0.00, "July": 0.00, "August": 0.41, "September": 0.00},
+  {"program": "5-Star", "January": 0.00, "February": 0.00, "March": 0.00, "April": 0.00, "May": 0.00, "June": 0.00, "July": 0.00, "August": 0.00, "September": 0.00},
+  {"program": "Roamly/Outdoorsy", "January": 0.00, "February": 0.27, "March": 0.00, "April": 0.00, "May": 0.00, "June": 0.00, "July": 0.00, "August": 0.00, "September": 0.00},
+  {"program": "Pattern", "January": 0.00, "February": 0.00, "March": 0.00, "April": 0.00, "May": 0.00, "June": 0.00, "July": 0.00, "August": 0.00, "September": 0.00},
+  {"program": "Sola", "January": 0.00, "February": 0.00, "March": 0.00, "April": 0.00, "May": 0.00, "June": 0.00, "July": 0.00, "August": 0.00, "September": 0.00},
+  {"program": "Euclid Cyber", "January": 0.00, "February": 0.00, "March": 0.00, "April": 0.00, "May": 0.00, "June": 0.00, "July": 0.00, "August": 0.00, "September": 0.00}
+];
+
+const MAIL_DATA = [
+  {"month":"January","Finance":110,"Notice Of Financed Premium":71,"Notice Of Cancellation":20,"Mortgage Clause":13,"Check":13,"Claim":12,"Legal":9,"Advice Of Financed Premium":6,"Confirmation Of Financed Policy":5,"Privacy Choice":3,"Notice Of Rescission":2,"Evidence Of Insurance":1,"Compliance":1},
+  {"month":"February","Finance":148,"Notice Of Financed Premium":62,"Notice Of Cancellation":18,"Mortgage Clause":45,"Check":21,"Claim":32,"Legal":13,"Advice Of Financed Premium":3,"Confirmation Of Financed Policy":4,"Privacy Choice":3,"Notice Of Rescission":0,"Evidence Of Insurance":2,"Compliance":10},
+  {"month":"March","Finance":134,"Notice Of Financed Premium":150,"Notice Of Cancellation":24,"Mortgage Clause":11,"Check":13,"Claim":38,"Legal":3,"Advice Of Financed Premium":2,"Confirmation Of Financed Policy":4,"Privacy Choice":4,"Notice Of Rescission":16,"Evidence Of Insurance":4,"Compliance":4},
+  {"month":"April","Finance":76,"Notice Of Financed Premium":82,"Notice Of Cancellation":21,"Mortgage Clause":24,"Check":10,"Claim":58,"Legal":0,"Advice Of Financed Premium":0,"Confirmation Of Financed Policy":0,"Privacy Choice":4,"Notice Of Rescission":0,"Evidence Of Insurance":1,"Compliance":5},
+  {"month":"May","Finance":28,"Notice Of Financed Premium":37,"Notice Of Cancellation":6,"Mortgage Clause":3,"Check":1,"Claim":20,"Legal":11,"Advice Of Financed Premium":0,"Confirmation Of Financed Policy":0,"Privacy Choice":0,"Notice Of Rescission":0,"Evidence Of Insurance":0,"Compliance":0},
+  {"month":"June","Finance":61,"Notice Of Financed Premium":144,"Notice Of Cancellation":21,"Mortgage Clause":3,"Check":10,"Claim":50,"Legal":7,"Advice Of Financed Premium":0,"Confirmation Of Financed Policy":0,"Privacy Choice":1,"Notice Of Rescission":0,"Evidence Of Insurance":0,"Compliance":12},
+  {"month":"July","Finance":22,"Notice Of Financed Premium":73,"Notice Of Cancellation":14,"Mortgage Clause":4,"Check":7,"Claim":65,"Legal":7,"Advice Of Financed Premium":0,"Confirmation Of Financed Policy":0,"Privacy Choice":0,"Notice Of Rescission":0,"Evidence Of Insurance":6,"Compliance":4},
+  {"month":"August","Finance":24,"Notice Of Financed Premium":98,"Notice Of Cancellation":21,"Mortgage Clause":0,"Check":7,"Claim":39,"Legal":0,"Advice Of Financed Premium":0,"Confirmation Of Financed Policy":0,"Privacy Choice":5,"Notice Of Rescission":9,"Evidence Of Insurance":1,"Compliance":3},
+  {"month":"September","Finance":19,"Notice Of Financed Premium":110,"Notice Of Cancellation":27,"Mortgage Clause":5,"Check":6,"Claim":34,"Legal":6,"Advice Of Financed Premium":0,"Confirmation Of Financed Policy":0,"Privacy Choice":8,"Notice Of Rescission":0,"Evidence Of Insurance":0,"Compliance":6}
+];
+
+const SLA_ABANDON_DATA = [
+  {"month": "January", "sla": 83.97, "abandon": 2.52},
+  {"month": "February", "sla": 91.16, "abandon": 1.53},
+  {"month": "March", "sla": 92.35, "abandon": 1.57},
+  {"month": "April", "sla": 85.27, "abandon": 1.65},
+  {"month": "May", "sla": 76.50, "abandon": 3.41},
+  {"month": "June", "sla": 77.56, "abandon": 3.22},
+  {"month": "July", "sla": 74.92, "abandon": 5.59},
+  {"month": "August", "sla": 61.18, "abandon": 7.51},
+  {"month": "September", "sla": 56.85, "abandon": 10.15}
+];
+
+const monthOrder = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+let activeTab = "callcenter";
+
+function uniq(a){return [...new Set(a)]}
+function fmt(n){return Number(n||0).toLocaleString()}
+function htmlEscape(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+
+function switchTab(tab) {
+  activeTab = tab;
+  document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  
+  if(tab === 'callcenter') {
+    document.querySelectorAll('.tab-btn')[0].classList.add('active');
+    document.getElementById('tab-callcenter').classList.add('active');
+    document.getElementById('programFilter').style.display = 'inline-block';
+    document.getElementById('headerSub').textContent = 'Program volume, SLA, call disposition, and abandonment overview';
+  } else if(tab === 'email') {
+    document.querySelectorAll('.tab-btn')[1].classList.add('active');
+    document.getElementById('tab-email').classList.add('active');
+    document.getElementById('programFilter').style.display = 'none';
+    document.getElementById('headerSub').textContent = 'Email support performance and SLA compliance overview';
+  } else if(tab === 'mail') {
+    document.querySelectorAll('.tab-btn')[2].classList.add('active');
+    document.getElementById('tab-mail').classList.add('active');
+    document.getElementById('programFilter').style.display = 'none';
+    document.getElementById('headerSub').textContent = 'Physical mail processing volume and mail type distribution overview';
+  }
+  render();
+}
+
+function filteredCallCenter(){
+  const m=document.getElementById("monthFilter").value, p=document.getElementById("programFilter").value;
+  return DATA.filter(r=>(m==="All"||r.month===m)&&(p==="All"||r.program===p));
+}
+
+function filteredEmail(){
+  const m=document.getElementById("monthFilter").value;
+  return EMAIL_DATA.filter(r=>(m==="All"||r.month===m));
+}
+
+function filteredMail(){
+  const m=document.getElementById("monthFilter").value;
+  return MAIL_DATA.filter(r=>(m==="All"||r.month===m));
+}
+
+function filteredSla(){
+  const m=document.getElementById("monthFilter").value;
+  return SLA_ABANDON_DATA.filter(r=>(m==="All"||r.month===m));
+}
+
+function aggregate(rows,key,val){
+  const o={}; rows.forEach(r=>{if(r[key])o[r[key]]=(o[r[key]]||0)+(+r[val]||0)}); return o;
+}
+
+function render(){
+  if(activeTab === 'callcenter') {
+    renderCallCenter();
+  } else if(activeTab === 'email') {
+    renderEmail();
+  } else if(activeTab === 'mail') {
+    renderMail();
+  }
+}
+
+function renderCallCenter(){
+  const rows=filteredCallCenter();
+  const total=rows.reduce((s,r)=>s+r.count,0);
+  const prog=uniq(rows.filter(r=>r.count>0).map(r=>r.program));
+  const byProg=aggregate(rows,"program","count");
+  const sorted=Object.entries(byProg).sort((a,b)=>b[1]-a[1]);
+  const top=sorted[0]||["—",0];
+  
+  const selectedMonth=document.getElementById("monthFilter").value;
+  const dispositionRows=DATA.filter(r=>(selectedMonth==="All"||r.month===selectedMonth)&&r.disposition);
+  const disp=aggregate(dispositionRows,"disposition","dispositionCount");
+  const dispTotal=Object.values(disp).reduce((a,b)=>a+b,0);
+
+  document.getElementById("total").textContent=fmt(total);
+  document.getElementById("programs").textContent=prog.length;
+  document.getElementById("topProgram").textContent=top[0];
+  document.getElementById("topValue").textContent=fmt(top[1]);
+  document.getElementById("dispTotal").textContent=fmt(dispTotal);
+  document.getElementById("period").textContent=selectedMonth==="All"?"All months":selectedMonth;
+
+  const slaRows = filteredSla();
+  const avgSla = slaRows.length ? (slaRows.reduce((s,r) => s + r.sla, 0) / slaRows.length).toFixed(2) : 0;
+  const avgAbandon = slaRows.length ? (slaRows.reduce((s,r) => s + r.abandon, 0) / slaRows.length).toFixed(2) : 0;
+  let peakSla = slaRows.reduce((max, r) => r.sla > max.sla ? r : max, {month: "—", sla: 0});
+  let maxAbandon = slaRows.reduce((max, r) => r.abandon > max.abandon ? r : max, {month: "—", abandon: 0});
+
+  document.getElementById("avgSlaRate").textContent = avgSla + "%";
+  document.getElementById("peakSlaMonth").textContent = peakSla.month;
+  document.getElementById("peakSlaVal").textContent = peakSla.sla.toFixed(2) + "%";
+  document.getElementById("avgAbandonRate").textContent = avgAbandon + "%";
+  document.getElementById("maxAbandonMonth").textContent = maxAbandon.month;
+  document.getElementById("maxAbandonVal").textContent = maxAbandon.abandon.toFixed(2) + "%";
+
+  drawClusteredColumns(SLA_ABANDON_DATA);
+  drawBars(sorted);
+  drawLine();
+
+  document.getElementById("topTable").innerHTML=sorted.slice(0,10).map((x,i)=>`<tr><td>${i+1}</td><td>${htmlEscape(x[0])}</td><td class="num">${fmt(x[1])}</td></tr>`).join("")||`<tr><td colspan="3" class="empty">No data</td></tr>`;
+  const ds=Object.entries(disp).sort((a,b)=>b[1]-a[1]);
+  document.getElementById("dispTable").innerHTML=ds.map(x=>`<tr><td>${htmlEscape(x[0])}</td><td class="num">${fmt(x[1])}</td></tr>`).join("")||`<tr><td colspan="2" class="empty">No disposition data for this month</td></tr>`;
+
+  document.getElementById("slaTable").innerHTML = slaRows.map(r => `
+    <tr>
+      <td>${htmlEscape(r.month)}</td>
+      <td class="num"><span class="badge" style="${r.sla >= 80 ? 'background:#dcfce7;color:#15803d;' : 'background:#fee2e2;color:#b91c1c;'}">${r.sla.toFixed(2)}%</span></td>
+      <td class="num"><span class="badge" style="${r.abandon <= 5 ? 'background:#dcfce7;color:#15803d;' : 'background:#fee2e2;color:#b91c1c;'}">${r.abandon.toFixed(2)}%</span></td>
+    </tr>
+  `).join("") || `<tr><td colspan="3" class="empty">No SLA data available</td></tr>`;
+}
+
+function renderEmail(){
+  const rows = filteredEmail();
+  const selectedMonth = document.getElementById("monthFilter").value;
+  const totalEmails = rows.reduce((s,r) => s + r.emails, 0);
+  const avgEmails = rows.length ? Math.round(totalEmails / rows.length) : 0;
+  const avgSla = rows.length ? (rows.reduce((s,r) => s + r.sla, 0) / rows.length).toFixed(2) : 0;
+  
+  let peak = rows.reduce((max, r) => r.emails > max.emails ? r : max, {month: "—", emails: 0});
+
+  document.getElementById("emailTotal").textContent = fmt(totalEmails);
+  document.getElementById("emailAvg").textContent = fmt(avgEmails);
+  document.getElementById("emailSlaAvg").textContent = avgSla + "%";
+  document.getElementById("emailPeak").textContent = peak.month;
+  document.getElementById("emailPeakVal").textContent = fmt(peak.emails) + " emails";
+  document.getElementById("emailPeriod").textContent = selectedMonth === "All" ? "All months" : selectedMonth;
+
+  drawEmailLine(rows);
+  drawEmailSlaLine(rows);
+
+  document.getElementById("emailTable").innerHTML = rows.map(r => `
+    <tr>
+      <td>${htmlEscape(r.month)}</td>
+      <td class="num">${fmt(r.emails)}</td>
+      <td class="num"><span class="badge" style="${r.sla >= 90 ? 'background:#dcfce7;color:#15803d;' : 'background:#fee2e2;color:#b91c1c;'}">${r.sla.toFixed(2)}%</span></td>
+    </tr>
+  `).join("") || `<tr><td colspan="3" class="empty">No email data</td></tr>`;
+}
+
+function renderMail(){
+  const rows = filteredMail();
+  const selectedMonth = document.getElementById("monthFilter").value;
+  
+  const mailKeys = ["Finance", "Notice Of Financed Premium", "Notice Of Cancellation", "Mortgage Clause", "Check", "Claim", "Legal", "Advice Of Financed Premium", "Confirmation Of Financed Policy", "Privacy Choice", "Notice Of Rescission", "Evidence Of Insurance", "Compliance"];
+  
+  const typeTotals = {};
+  mailKeys.forEach(k => typeTotals[k] = 0);
+  
+  let totalMail = 0;
+  const monthlyTotals = rows.map(r => {
+    let mTotal = 0;
+    mailKeys.forEach(k => {
+      let val = r[k] || 0;
+      typeTotals[k] += val;
+      mTotal += val;
+    });
+    totalMail += mTotal;
+    return { month: r.month, total: mTotal };
+  });
+
+  const avgMail = rows.length ? Math.round(totalMail / rows.length) : 0;
+  
+  const sortedTypes = Object.entries(typeTotals).sort((a,b) => b[1] - a[1]);
+  const topType = sortedTypes[0] || ["—", 0];
+  
+  let peak = monthlyTotals.reduce((max, r) => r.total > max.total ? r : max, {month: "—", total: 0});
+
+  document.getElementById("mailTotal").textContent = fmt(totalMail);
+  document.getElementById("mailAvg").textContent = fmt(avgMail);
+  document.getElementById("mailTopType").textContent = topType[0];
+  document.getElementById("mailTopVal").textContent = fmt(topType[1]) + " items";
+  document.getElementById("mailPeak").textContent = peak.month;
+  document.getElementById("mailPeakVal").textContent = fmt(peak.total) + " items";
+  document.getElementById("mailPeriod").textContent = selectedMonth === "All" ? "All months" : selectedMonth;
+
+  drawMailPieChart(sortedTypes, totalMail);
+  drawMailLineChart(monthlyTotals);
+
+  // Render Program Mail Percentage Table (> 1% filter)
+  const availableMonths = selectedMonth === "All" 
+    ? ["January", "February", "March", "April", "May", "June", "July", "August", "September"]
+    : [selectedMonth];
+
+  const programPcts = PROGRAM_MAIL_PCT_DATA.map(pObj => {
+    let sumPct = 0;
+    availableMonths.forEach(m => {
+      sumPct += (pObj[m] || 0);
+    });
+    const avgPct = sumPct / availableMonths.length;
+    return { program: pObj.program, pct: avgPct };
+  }).filter(item => item.pct > 1.0)
+    .sort((a,b) => b.pct - a.pct);
+
+  document.getElementById("mailProgramTable").innerHTML = programPcts.map(r => `
+    <tr>
+      <td>${htmlEscape(r.program)}</td>
+      <td class="num"><span class="badge">${r.pct.toFixed(2)}%</span></td>
+    </tr>
+  `).join("") || `<tr><td colspan="2" class="empty">No programs exceeding 1% for this selection</td></tr>`;
+
+  document.getElementById("mailTypeTable").innerHTML = sortedTypes.map(x => {
+    const pct = totalMail ? ((x[1] / totalMail) * 100).toFixed(2) : "0.00";
+    return `<tr><td>${htmlEscape(x[0])}</td><td class="num">${fmt(x[1])}</td><td class="num"><span class="badge">${pct}%</span></td></tr>`;
+  }).join("") || `<tr><td colspan="3" class="empty">No mail data</td></tr>`;
+
+  document.getElementById("mailMonthlyTable").innerHTML = monthlyTotals.map(r => `
+    <tr>
+      <td>${htmlEscape(r.month)}</td>
+      <td class="num">${fmt(r.total)}</td>
+    </tr>
+  `).join("") || `<tr><td colspan="2" class="empty">No monthly mail data</td></tr>`;
+}
+
+function drawMailPieChart(sortedTypes, totalMail){
+  const svg = document.getElementById("mailPieChart");
+  svg.innerHTML = "";
+
+  if(!totalMail) {
+    svg.insertAdjacentHTML("beforeend", `<text x="500" y="230" text-anchor="middle" fill="#6b7280">No data available</text>`);
+    return;
+  }
+
+  const colors = [
+    "#0f766e", "#2563eb", "#ea580c", "#dc2626", "#7c3aed", 
+    "#059669", "#db2777", "#4f46e5", "#ca8a04", "#0284c7", 
+    "#9333ea", "#16a34a", "#64748b"
+  ];
+
+  const cx = 500, cy = 230, r = 125, innerR = 60;
+  let startAngle = -Math.PI / 2;
+
+  const externalLabelsLeft = [];
+  const externalLabelsRight = [];
+
+  sortedTypes.forEach((item, i) => {
+    const [label, count] = item;
+    if(count === 0) return;
+    
+    const pct = count / totalMail;
+    const angle = pct * 2 * Math.PI;
+    const endAngle = startAngle + angle;
+
+    const x1 = cx + r * Math.cos(startAngle);
+    const y1 = cy + r * Math.sin(startAngle);
+    const x2 = cx + r * Math.cos(endAngle);
+    const y2 = cy + r * Math.sin(endAngle);
+
+    const ix1 = cx + innerR * Math.cos(startAngle);
+    const iy1 = cy + innerR * Math.sin(startAngle);
+    const ix2 = cx + innerR * Math.cos(endAngle);
+    const iy2 = cy + innerR * Math.sin(endAngle);
+
+    const largeArc = angle > Math.PI ? 1 : 0;
+    const pathData = `M ${ix1} ${iy1} L ${x1} ${y1} A ${r} ${r} 0 ${largeArc} 1 ${x2} ${y2} L ${ix2} ${iy2} A ${innerR} ${innerR} 0 ${largeArc} 0 ${ix1} ${iy1} Z`;
+
+    const color = colors[i % colors.length];
+    
+    // Draw Slice
+    svg.insertAdjacentHTML("beforeend", `<path d="${pathData}" fill="${color}" stroke="#fff" stroke-width="2"><title>${htmlEscape(label)}: ${fmt(count)} (${(pct*100).toFixed(2)}%)</title></path>`);
+
+    const midAngle = startAngle + angle / 2;
+    const formattedPct = (pct * 100).toFixed(1) + "%";
+
+    const labelObj = {
+      label,
+      count,
+      pct: formattedPct,
+      midAngle,
+      color,
+      anchorX: cx + r * Math.cos(midAngle),
+      anchorY: cy + r * Math.sin(midAngle),
+      idealY: cy + (r + 25) * Math.sin(midAngle)
+    };
+
+    if (Math.cos(midAngle) >= 0) {
+      externalLabelsRight.push(labelObj);
+    } else {
+      externalLabelsLeft.push(labelObj);
+    }
+
+    startAngle = endAngle;
+  });
+
+  function adjustYPositions(labels) {
+    if (!labels.length) return;
+    labels.sort((a, b) => a.idealY - b.idealY);
+    const minGap = 24;
+    for (let i = 0; i < labels.length; i++) {
+      labels[i].y = labels[i].idealY;
+      if (i > 0 && labels[i].y < labels[i - 1].y + minGap) {
+        labels[i].y = labels[i - 1].y + minGap;
+      }
+    }
+  }
+
+  adjustYPositions(externalLabelsRight);
+  adjustYPositions(externalLabelsLeft);
+
+  externalLabelsRight.forEach(item => {
+    const lx1 = item.anchorX;
+    const ly1 = item.anchorY;
+    const lx2 = cx + r + 35;
+    const ly2 = item.y;
+    const lx3 = lx2 + 25;
+
+    svg.insertAdjacentHTML("beforeend", `
+      <polyline points="${lx1},${ly1} ${lx2},${ly2} ${lx3},${ly2}" fill="none" stroke="${item.color}" stroke-width="1.5" opacity="0.85"></polyline>
+      <circle cx="${lx1}" cy="${ly1}" r="3" fill="${item.color}"></circle>
+      <text x="${lx3 + 6}" y="${ly2 - 2}" text-anchor="start" fill="#172033" style="font-size:11px;font-weight:600;">${htmlEscape(item.label)}</text>
+      <text x="${lx3 + 6}" y="${ly2 + 10}" text-anchor="start" fill="${item.color}" style="font-size:10px;font-weight:bold;">${item.pct}</text>
+    `);
+  });
+
+  externalLabelsLeft.forEach(item => {
+    const lx1 = item.anchorX;
+    const ly1 = item.anchorY;
+    const lx2 = cx - r - 35;
+    const ly2 = item.y;
+    const lx3 = lx2 - 25;
+
+    svg.insertAdjacentHTML("beforeend", `
+      <polyline points="${lx1},${ly1} ${lx2},${ly2} ${lx3},${ly2}" fill="none" stroke="${item.color}" stroke-width="1.5" opacity="0.85"></polyline>
+      <circle cx="${lx1}" cy="${ly1}" r="3" fill="${item.color}"></circle>
+      <text x="${lx3 - 6}" y="${ly2 - 2}" text-anchor="end" fill="#172033" style="font-size:11px;font-weight:600;">${htmlEscape(item.label)}</text>
+      <text x="${lx3 - 6}" y="${ly2 + 10}" text-anchor="end" fill="${item.color}" style="font-size:10px;font-weight:bold;">${item.pct}</text>
+    `);
+  });
+
+  svg.insertAdjacentHTML("beforeend", `
+    <text x="${cx}" y="${cy-4}" text-anchor="middle" fill="#172033" style="font-size:18px;font-weight:bold;">${fmt(totalMail)}</text>
+    <text x="${cx}" y="${cy+14}" text-anchor="middle" fill="#6b7280" style="font-size:11px;">Total Mail</text>
+  `);
+}
+
+function drawMailLineChart(monthlyTotals){
+  const svg=document.getElementById("mailLineChart"), W=650, H=310, pad={l:50, r:25, t:25, b:40}; svg.innerHTML="";
+  if(!monthlyTotals.length) return;
+  const vals = monthlyTotals.map(r=>r.total);
+  const max = Math.max(...vals, 100), innerW = W - pad.l - pad.r, innerH = H - pad.t - pad.b;
+  
+  for(let i=0; i<5; i++){
+    let y = pad.t + innerH * i / 4, v = Math.round(max * (1 - i / 4));
+    svg.insertAdjacentHTML("beforeend", `<line class="axis" x1="${pad.l}" y1="${y}" x2="${W-pad.r}" y2="${y}"></line><text class="label" x="${pad.l-7}" y="${y+4}" text-anchor="end">${fmt(v)}</text>`);
+  }
+  let pts = monthlyTotals.map((r, i) => {
+    let x = monthlyTotals.length === 1 ? pad.l + innerW / 2 : pad.l + innerW * i / (monthlyTotals.length - 1);
+    let y = pad.t + innerH - (r.total / max) * innerH;
+    return [x, y, r.total, r.month];
+  });
+  svg.insertAdjacentHTML("beforeend", `<polyline points="${pts.map(p=>p[0]+","+p[1]).join(" ")}" fill="none" stroke="#2563eb" stroke-width="3"></polyline>`);
+  pts.forEach(p => {
+    svg.insertAdjacentHTML("beforeend", `<circle cx="${p[0]}" cy="${p[1]}" r="4" fill="#fff" stroke="#2563eb" stroke-width="3"></circle><text class="label" x="${p[0]}" y="${H-15}" text-anchor="middle">${p[3].slice(0,3)}</text><text class="value" x="${p[0]}" y="${p[1]-9}" text-anchor="middle">${fmt(p[2])}</text>`);
+  });
+}
+
+function drawBars(entries){
+  const svg=document.getElementById("barChart"), W=900,H=310,pad={l:145,r:25,t:12,b:28};
+  svg.innerHTML="";
+  if(!entries.length)return;
+  const max=Math.max(...entries.map(x=>x[1]),1), shown=entries.slice(0,18), bh=Math.max(11,(H-pad.t-pad.b)/shown.length-5);
+  shown.forEach((x,i)=>{
+    const y=pad.t+i*((H-pad.t-pad.b)/shown.length), w=(W-pad.l-pad.r)*x[1]/max;
+    svg.insertAdjacentHTML("beforeend",`<text class="label" x="${pad.l-8}" y="${y+bh*.72}" text-anchor="end">${htmlEscape(x[0])}</text><rect class="bar" x="${pad.l}" y="${y}" width="${w}" height="${bh}" rx="4"></rect><text class="value" x="${pad.l+w+6}" y="${y+bh*.72}">${fmt(x[1])}</text>`);
+  });
+}
+
+function drawLine(){
+  const svg=document.getElementById("lineChart"),W=650,H=310,pad={l:45,r:18,t:20,b:40};svg.innerHTML="";
+  const selected=document.getElementById("monthFilter").value;
+  const months=selected==="All"?monthOrder.filter(m=>DATA.some(r=>r.month===m)):[selected];
+  const vals=months.map(m=>DATA.filter(r=>(document.getElementById("programFilter").value==="All"||r.program===document.getElementById("programFilter").value)&&r.month===m).reduce((s,r)=>s+r.count,0));
+  if(!vals.length)return;
+  const max=Math.max(...vals,1), innerW=W-pad.l-pad.r, innerH=H-pad.t-pad.b;
+  for(let i=0;i<5;i++){let y=pad.t+innerH*i/4,v=Math.round(max*(1-i/4));svg.insertAdjacentHTML("beforeend",`<line class="axis" x1="${pad.l}" y1="${y}" x2="${W-pad.r}" y2="${y}"></line><text class="label" x="${pad.l-7}" y="${y+4}" text-anchor="end">${fmt(v)}</text>`)}
+  let pts=vals.map((v,i)=>{let x=months.length===1?pad.l+innerW/2:pad.l+innerW*i/(months.length-1),y=pad.t+innerH-(v/max)*innerH;return [x,y,v]});
+  svg.insertAdjacentHTML("beforeend",`<polyline points="${pts.map(p=>p[0]+","+p[1]).join(" ")}" fill="none" stroke="#2563eb" stroke-width="3"></polyline>`);
+  pts.forEach((p,i)=>svg.insertAdjacentHTML("beforeend",`<circle cx="${p[0]}" cy="${p[1]}" r="4" fill="#fff" stroke="#2563eb" stroke-width="3"></circle><text class="label" x="${p[0]}" y="${H-15}" text-anchor="middle">${months[i].slice(0,3)}</text><text class="value" x="${p[0]}" y="${p[1]-9}" text-anchor="middle">${fmt(p[2])}</text>`));
+}
+
+function drawEmailLine(rows){
+  const svg=document.getElementById("emailLineChart"), W=900, H=310, pad={l:50, r:25, t:25, b:40}; svg.innerHTML="";
+  if(!rows.length) return;
+  const vals = rows.map(r=>r.emails);
+  const max = Math.max(...vals, 100), innerW = W - pad.l - pad.r, innerH = H - pad.t - pad.b;
+  
+  for(let i=0; i<5; i++){
+    let y = pad.t + innerH * i / 4, v = Math.round(max * (1 - i / 4));
+    svg.insertAdjacentHTML("beforeend", `<line class="axis" x1="${pad.l}" y1="${y}" x2="${W-pad.r}" y2="${y}"></line><text class="label" x="${pad.l-7}" y="${y+4}" text-anchor="end">${fmt(v)}</text>`);
+  }
+  let pts = rows.map((r, i) => {
+    let x = rows.length === 1 ? pad.l + innerW / 2 : pad.l + innerW * i / (rows.length - 1);
+    let y = pad.t + innerH - (r.emails / max) * innerH;
+    return [x, y, r.emails, r.month];
+  });
+  svg.insertAdjacentHTML("beforeend", `<polyline points="${pts.map(p=>p[0]+","+p[1]).join(" ")}" fill="none" stroke="#2563eb" stroke-width="3"></polyline>`);
+  pts.forEach(p => {
+    svg.insertAdjacentHTML("beforeend", `<circle cx="${p[0]}" cy="${p[1]}" r="4" fill="#fff" stroke="#2563eb" stroke-width="3"></circle><text class="label" x="${p[0]}" y="${H-15}" text-anchor="middle">${p[3].slice(0,3)}</text><text class="value" x="${p[0]}" y="${p[1]-9}" text-anchor="middle">${fmt(p[2])}</text>`);
+  });
+}
+
+function drawEmailSlaLine(rows){
+  const svg=document.getElementById("emailSlaChart"), W=650, H=310, pad={l:50, r:25, t:25, b:40}; svg.innerHTML="";
+  if(!rows.length) return;
+  const vals = rows.map(r=>r.sla);
+  const min = Math.max(0, Math.floor(Math.min(...vals) / 10) * 10 - 10);
+  const max = 100;
+  const range = max - min || 1;
+  const innerW = W - pad.l - pad.r, innerH = H - pad.t - pad.b;
+
+  for(let i=0; i<5; i++){
+    let y = pad.t + innerH * i / 4, v = Math.round(max - (range * i / 4));
+    svg.insertAdjacentHTML("beforeend", `<line class="axis" x1="${pad.l}" y1="${y}" x2="${W-pad.r}" y2="${y}"></line><text class="label" x="${pad.l-7}" y="${y+4}" text-anchor="end">${v}%</text>`);
+  }
+  let pts = rows.map((r, i) => {
+    let x = rows.length === 1 ? pad.l + innerW / 2 : pad.l + innerW * i / (rows.length - 1);
+    let y = pad.t + innerH - ((r.sla - min) / range) * innerH;
+    return [x, y, r.sla, r.month];
+  });
+  svg.insertAdjacentHTML("beforeend", `<polyline points="${pts.map(p=>p[0]+","+p[1]).join(" ")}" fill="none" stroke="#0f766e" stroke-width="3"></polyline>`);
+  pts.forEach(p => {
+    svg.insertAdjacentHTML("beforeend", `<circle cx="${p[0]}" cy="${p[1]}" r="4" fill="#fff" stroke="#0f766e" stroke-width="3"></circle><text class="label" x="${p[0]}" y="${H-15}" text-anchor="middle">${p[3].slice(0,3)}</text><text class="value" x="${p[0]}" y="${p[1]-9}" text-anchor="middle">${p[2].toFixed(1)}%</text>`);
+  });
+}
+
+function drawClusteredColumns(rows){
+  const svg=document.getElementById("clusteredBarChart"), W=900, H=330, pad={l:50, r:20, t:30, b:45};
+  svg.innerHTML="";
+  if(!rows.length) return;
+
+  const innerW = W - pad.l - pad.r, innerH = H - pad.t - pad.b;
+  const maxVal = 100;
+
+  for(let i=0; i<=5; i++){
+    let y = pad.t + innerH * i / 5;
+    let v = 100 - i * 20;
+    svg.insertAdjacentHTML("beforeend", `<line class="axis" x1="${pad.l}" y1="${y}" x2="${W-pad.r}" y2="${y}"></line><text class="label" x="${pad.l-8}" y="${y+4}" text-anchor="end">${v}%</text>`);
+  }
+
+  const groupWidth = innerW / rows.length;
+  const barWidth = Math.min(28, (groupWidth - 20) / 2);
+
+  rows.forEach((r, i) => {
+    let groupX = pad.l + i * groupWidth + (groupWidth - (barWidth * 2 + 4)) / 2;
+    
+    let slaH = (r.sla / maxVal) * innerH;
+    let slaY = pad.t + innerH - slaH;
+    svg.insertAdjacentHTML("beforeend", `
+      <rect class="bar" x="${groupX}" y="${slaY}" width="${barWidth}" height="${slaH}" rx="4" fill="#2563eb"></rect>
+      <text class="value" x="${groupX + barWidth/2}" y="${slaY - 6}" text-anchor="middle" style="font-size:10px;">${r.sla.toFixed(1)}%</text>
+    `);
+
+    let abandonH = (r.abandon / maxVal) * innerH;
+    let abandonY = pad.t + innerH - abandonH;
+    let abandonX = groupX + barWidth + 4;
+    svg.insertAdjacentHTML("beforeend", `
+      <rect class="bar" x="${abandonX}" y="${abandonY}" width="${barWidth}" height="${abandonH}" rx="4" fill="#dc2626"></rect>
+      <text class="value" x="${abandonX + barWidth/2}" y="${abandonY - 6}" text-anchor="middle" style="font-size:10px;fill:#dc2626;">${r.abandon.toFixed(1)}%</text>
+    `);
+
+    svg.insertAdjacentHTML("beforeend", `
+      <text class="label" x="${groupX + barWidth + 2}" y="${H - 15}" text-anchor="middle" style="font-weight:600;">${r.month.slice(0,3)}</text>
+    `);
+  });
+}
+
+function resetFilters(){
+  document.getElementById("monthFilter").value="All";
+  document.getElementById("programFilter").value="All";
+  render();
+}
+
+const months=monthOrder.filter(m=>DATA.some(r=>r.month===m) || EMAIL_DATA.some(r=>r.month===m) || SLA_ABANDON_DATA.some(r=>r.month===m) || MAIL_DATA.some(r=>r.month===m));
+document.getElementById("monthFilter").innerHTML=`<option value="All">All Months</option>`+months.map(m=>`<option>${m}</option>`).join("");
+uniq(DATA.map(r=>r.program)).sort().forEach(p=>document.getElementById("programFilter").insertAdjacentHTML("beforeend",`<option>${htmlEscape(p)}</option>`));
+
+document.getElementById("monthFilter").addEventListener("change",render);
+document.getElementById("programFilter").addEventListener("change",render);
+
+render();
+</script>
+</body>
+</html>
